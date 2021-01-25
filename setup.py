@@ -4,7 +4,7 @@ from os.path import abspath, dirname, join
 from setuptools import find_packages, setup
 
 
-TEST_DEPS = ["coverage", "pytest", "pytest-cov"]
+TEST_DEPS = ["coverage[toml]", "pytest", "pytest-cov"]
 DOCS_DEPS = ["sphinx", "sphinx-rtd-theme", "sphinx-autoapi", "recommonmark"]
 CHECK_DEPS = ["isort", "flake8", "flake8-quotes", "pep8-naming", "mypy", "black"]
 EXTRAS = {
@@ -16,7 +16,6 @@ EXTRAS = {
 
 
 REQUIREMENTS = [
-    "invenia-cli-utils",
     "Jinja2>=2.10.3",
     "python-dateutil>=2.8.1",
     "python-gitlab>=1.8.0",
