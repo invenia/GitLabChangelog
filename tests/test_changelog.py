@@ -256,6 +256,7 @@ def test_collect_data():
     merge_request.title = "Merge Request"
     merge_request.web_url = "https://gitlab.foo.com/foo/bar/~/merge_requests/1"
     merge_request.merged_by = author
+    merge_request.get_id = Mock(return_value="1")
 
     # Note this merge request is not included in the commits returned from
     # repository_compare (not part of the tag) so it should not appear in the result
@@ -279,6 +280,7 @@ def test_collect_data():
     issue.description = ""
     issue.title = "Issue"
     issue.web_url = "https://gitlab.foo.com/foo/bar/~/issues/1"
+    issue.get_id = Mock(return_value="1")
 
     # Note this issue was not closed by a MR that belongs to the tag so it should
     # not appear in the release notes even though it was closed during the time interval
@@ -330,7 +332,49 @@ def test_collect_data():
         "version": version,
         "version_url": "gitlab.foo.com/foo/bar/tree/v0.1.2",
     }
-    assert changelog._collect_data(version, commit_sha) == expected
+    data = changelog._collect_data(version, commit_sha)
+    assert data == expected
+
+    # Test rendering the changelog
+    expected_release_notes = """
+    ## bar v0.1.2
+
+    [Diff since v0.1.0](gitlab.foo.com/foo/bar/-/compare/v0.1.0...v0.1.2)
+
+    **Closed issues:**
+    - Issue (#1)
+
+    **Merged pull requests:**
+    - Merge Request (!1) (@john.smith)
+    """.replace(
+        "    ", ""
+    ).strip()
+    assert changelog._render(data) == expected_release_notes
+
+    # Test passing in a non-default template
+    template = """
+    This is release {{ version }} of {{ package }}.
+
+        {% if merge_requests %}
+        **Summary:**
+        {% for merge_request in merge_requests %}
+        - {{ merge_request.title }} (!{{ merge_request.number }})
+        {% endfor %}
+        {% endif %}
+    """.replace(
+        "    ", ""
+    ).strip()
+
+    expected_release_notes = """
+    This is release v0.1.2 of bar.
+
+        **Summary:**
+        - Merge Request (!1)
+    """.replace(
+        "    ", ""
+    ).strip()
+    changelog = Changelog(p, template)
+    assert changelog._render(data) == expected_release_notes
 
 
 def test_collect_data_for_first_release():
