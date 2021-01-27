@@ -108,7 +108,7 @@ The data available to you looks like this:
 }
 ```
 
-You can see the default template in gitlabchangelog/changelog.py.
+You can see the default template in `gitlabchangelog/changelog.py`.
 
 ## Ignore labels
 Issues and pull requests with specified labels are not included in the changelog data.
