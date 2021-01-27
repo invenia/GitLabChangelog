@@ -184,6 +184,17 @@ class Changelog:
             prev_tag = previous.name
             compare = f"{gitlab_url}/{repo}/-/compare/{prev_tag}...{version}"
 
+        if prev_tag is None:
+            # Compare to first commit on the master branch to get merge requests and
+            # issues closed for first tag in the repo
+            all_commits = self._repo.commits.list(
+                all=True,
+                query_parameters={"ref_name": "master"},
+            )
+            # The last commit is the first commit on the master branch
+            prev_tag = all_commits[-1].short_id
+            compare = f"{gitlab_url}/{repo}/-/compare/{prev_tag}...{version}"
+
         tag_commits = self._repo.repository_compare(prev_tag, version)["commits"]
 
         # Get merge requests where the merge commit is one of the commits in the tag

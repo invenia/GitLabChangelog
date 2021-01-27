@@ -315,3 +315,112 @@ def test_collect_data():
         "version_url": "gitlab.foo.com/foo/bar/tree/v0.1.2",
     }
     assert changelog._collect_data(version, commit_sha) == expected
+
+
+def test_collect_data_for_first_release():
+    p = Mock(spec=gitlab.v4.objects.Project)
+    p.get_id = Mock(return_value="foo/bar")
+    changelog = Changelog(p)
+
+    # Set up tags
+    version = "v0.0.1"
+    commit_sha = "abcdef"
+
+    p.tags = Mock(spec=gitlab.v4.objects.ProjectTagManager)
+    p.tags.gitlab = Mock(spec=gitlab.Gitlab)
+    p.tags.gitlab.url = "gitlab.foo.com"
+
+    tag = Mock(spec=gitlab.v4.objects.ProjectTag)
+    tag.name = version
+    tag.attributes = {"commit": {"created_at": "2020-02-01 11:00:00"}}
+
+    p.tags.list = Mock(return_value=[tag])
+
+    # Set up commits
+    # Tag commit
+    commit = Mock(spec=gitlab.v4.objects.ProjectCommit)
+    commit.id = commit_sha
+    commit.created_at = "2020-02-01 11:00:00"
+
+    # First commit on the master branch
+    commit_1 = Mock(spec=gitlab.v4.objects.ProjectCommit)
+    commit_1.short_id = "1a2b3c4d"
+    commit_1.created_at = "2020-01-01 11:00:00"
+
+    p.commits = Mock(spec=gitlab.v4.objects.ProjectCommitManager)
+    p.commits.get = Mock(return_value=commit)
+    p.commits.list = Mock(return_value=[commit, commit_1])
+
+    commits_detail = {"commits": [{"id": commit_sha}, {"id": commit_1.short_id}]}
+    p.repository_compare = Mock(return_value=commits_detail)
+
+    # Set up GitLab user
+    author = {
+        "name": "John Smith",
+        "web_url": "https://gitlab.foo.com/john.smith",
+        "username": "john.smith",
+    }
+
+    # Set up merged merge requests in the repo
+    merge_request = Mock(spec=gitlab.v4.objects.MergeRequest)
+    merge_request.merged_at = "2020-01-15 11:00:00"
+    merge_request.labels = []
+    merge_request.merge_commit_sha = commit_sha
+    merge_request.iid = "1"
+    merge_request.author = author
+    merge_request.description = ""
+    merge_request.title = "Merge Request"
+    merge_request.web_url = "https://gitlab.foo.com/foo/bar/~/merge_requests/1"
+    merge_request.merged_by = author
+
+    p.mergerequests = Mock(spec=gitlab.v4.objects.MergeRequestManager)
+    p.mergerequests.list = Mock(return_value=[merge_request])
+
+    # Set up closed issues in the repo
+    issue = Mock(spec=gitlab.v4.objects.Issue)
+    issue.closed_at = "2020-01-15 11:00:00"
+    issue.closed_by = Mock(return_value=[{"iid": merge_request.iid}])
+    issue.labels = []
+    issue.author = author
+    issue.description = ""
+    issue.title = "Issue"
+    issue.web_url = "https://gitlab.foo.com/foo/bar/~/issues/1"
+
+    p.issues = Mock(spec=gitlab.v4.objects.ProjectIssueManager)
+    p.issues.list = Mock(return_value=[issue])
+
+    # Test changelog returned is as expected
+    expected_user = {
+        "name": "John Smith",
+        "url": "https://gitlab.foo.com/john.smith",
+        "username": "john.smith",
+    }
+    expected_merge_request = {
+        "author": expected_user,
+        "description": "",
+        "labels": [],
+        "merger": expected_user,
+        "number": merge_request.get_id(),
+        "title": "Merge Request",
+        "url": "https://gitlab.foo.com/foo/bar/~/merge_requests/1",
+    }
+    expected_issue = {
+        "author": expected_user,
+        "description": "",
+        "labels": [],
+        "number": issue.get_id(),
+        "title": "Issue",
+        "url": "https://gitlab.foo.com/foo/bar/~/issues/1",
+    }
+    compare_url = f"gitlab.foo.com/foo/bar/-/compare/{commit_1.short_id}...{version}"
+    expected = {
+        "compare_url": compare_url,
+        "issues": [expected_issue],
+        "package": "bar",
+        "previous_release": commit_1.short_id,
+        "merge_requests": [expected_merge_request],
+        "sha": commit_sha,
+        "version": version,
+        "version_url": f"gitlab.foo.com/foo/bar/tree/{version}",
+    }
+    assert changelog._collect_data(version, commit_sha) == expected
