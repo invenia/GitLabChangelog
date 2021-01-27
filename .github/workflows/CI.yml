@@ -110,3 +110,12 @@ jobs:
       # Run Coverage
       - name: Run Coverage
         run: tox -e coverage
+
+  finish:
+    needs: coverage
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
