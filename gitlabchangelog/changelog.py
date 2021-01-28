@@ -48,6 +48,13 @@ DEFAULT_TEMPLATE = """
 """  # noqa: E501
 
 
+def _strip_starting_v(version: str) -> str:
+    """Ignore starting v char in tags"""
+    if version.startswith("v"):
+        return version[1:]
+    return version
+
+
 class Changelog:
     """A Changelog produces release notes for a single release."""
 
@@ -64,18 +71,19 @@ class Changelog:
 
     def _previous_release(self, version: str) -> Optional[ProjectTag]:
         """Get the release previous to the current one (according to SemVer)."""
-        cur_ver = semver.VersionInfo.parse(version[1:])
+        cur_ver = semver.VersionInfo.parse(_strip_starting_v(version))
         prev_ver = semver.VersionInfo.parse("0.0.0")
         prev_rel = None
         for tag in self._repo.tags.list(all=True):
-            if not tag.name.startswith("v"):
-                continue
+            tag_name = _strip_starting_v(tag.name)
+
             try:
-                ver = semver.VersionInfo.parse(tag.name[1:])
+                ver = semver.VersionInfo.parse(tag_name)
             except ValueError:
                 continue
             if ver.prerelease or ver.build:
                 continue
+
             # Get the highest version that is not greater than the current one.
             # That means if we're creating a backport v1.1, an already existing v2.0,
             # despite being newer than v1.0, will not be selected.
