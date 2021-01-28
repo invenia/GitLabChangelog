@@ -16,15 +16,31 @@ def test_previous_release():
     tag_1 = Mock(spec=gitlab.v4.objects.ProjectTag)
     tag_1.name = "v0.0.1"
     tag_1.attributes = {"commit": {"created_at": "2020-01-01 11:00:00"}}
+
     tag_2 = Mock(spec=gitlab.v4.objects.ProjectTag)
     tag_2.name = "v0.0.2"
     tag_2.attributes = {"commit": {"created_at": "2020-01-01 11:00:00"}}
-    p.tags.list = Mock(return_value=[tag_1, tag_2])
+
+    # Test that the starting "v" is not needed using tag_3_rc1 and tag_3
+    # Also note that successive tags should ignore pre-releases
+    tag_3_rc1 = Mock(spec=gitlab.v4.objects.ProjectTag)
+    tag_3_rc1.name = "0.0.3-rc1"
+    tag_3_rc1.attributes = {"commit": {"created_at": "2020-01-01 11:00:00"}}
+
+    tag_3 = Mock(spec=gitlab.v4.objects.ProjectTag)
+    tag_3.name = "0.0.3"
+    tag_3.attributes = {"commit": {"created_at": "2020-01-01 11:00:00"}}
+
+    p.tags.list = Mock(return_value=[tag_1, tag_2, tag_3_rc1, tag_3])
 
     changelog = Changelog(p)
 
-    assert changelog._previous_release("v0.1.0") == tag_2
-    assert changelog._previous_release("v0.0.3") == tag_2
+    # Mixture of starting with v and not to confirm the v starting char is not required
+    # and ignored if present
+    assert changelog._previous_release("v0.1.0") == tag_3
+    assert changelog._previous_release("0.0.4") == tag_3
+    assert changelog._previous_release("0.0.3") == tag_2
+    assert changelog._previous_release("0.0.3-rc1") == tag_2
     assert changelog._previous_release("v0.0.2") == tag_1
     assert changelog._previous_release("v0.0.1") is None
     assert changelog._previous_release("v0.0.0") is None
