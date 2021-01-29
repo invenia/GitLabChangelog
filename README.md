@@ -29,6 +29,9 @@ You can run tests locally by running in the virtualenv you installed the package
 ```
 tox
 ```
+
+New releases will automatically publish the package to TestPyPi and PyPi via GitHub Actions.
+Don't forget to bump the version in `gitlabchangelog/VERSION` before tagging a new release.
 ## Changelog format
 
 The changelog is completely customizable with the [Jinja](https://jinja.palletsprojects.com) templating engine.
