@@ -6,7 +6,15 @@ from setuptools import find_packages, setup
 
 TEST_DEPS = ["coverage[toml]", "pytest", "pytest-cov"]
 DOCS_DEPS = ["sphinx", "sphinx-rtd-theme", "sphinx-autoapi", "recommonmark"]
-CHECK_DEPS = ["isort", "flake8", "flake8-quotes", "pep8-naming", "mypy", "black"]
+CHECK_DEPS = [
+    "isort",
+    "flake8",
+    "flake8-quotes",
+    "pep8-naming",
+    "mypy",
+    "black",
+    "types-python-dateutil",
+]
 EXTRAS = {
     "test": TEST_DEPS,
     "docs": DOCS_DEPS,
