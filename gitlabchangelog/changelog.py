@@ -203,7 +203,7 @@ class Changelog:
             prev_tag = all_commits[-1].short_id
             compare = f"{gitlab_url}/{repo}/-/compare/{prev_tag}...{version}"
 
-        tag_commits = self._repo.repository_compare(prev_tag, version)["commits"]
+        tag_commits = self._repo.repository_compare(prev_tag, commit_sha)["commits"]
 
         # Get merge requests where the merge commit is one of the commits in the tag
         # Works even for merge requests that squash their commits on merge
