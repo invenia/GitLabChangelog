@@ -26,7 +26,7 @@ EXTRAS = {
 REQUIREMENTS = [
     "Jinja2>=2.10.3",
     "python-dateutil>=2.8.1",
-    "python-gitlab>=1.8.0",
+    "python-gitlab>=1.8.0, <3.0.0",
     "semver>=2.9.0",
 ]
 
