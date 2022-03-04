@@ -195,7 +195,11 @@ class Changelog:
         if prev_tag is None:
             # Compare to first commit on the default branch to get merge requests and
             # issues closed for first tag in the repo
-            [default_branch] = [branch for branch in self._repo.branches.list() if branch.default]
+
+            # This syntax ensures there is only one item to unpack from the list
+            [default_branch] = [
+                branch for branch in self._repo.branches.list() if branch.default
+            ]
             all_commits = self._repo.commits.list(
                 all=True,
                 query_parameters={"ref_name": default_branch.name},

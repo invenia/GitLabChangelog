@@ -398,7 +398,7 @@ def test_collect_data_for_first_release():
 
     # Set up branches
     branch1 = Mock(spec=gitlab.v4.objects.ProjectBranch)
-    branch1.name = "master" # Note: not the default branch
+    branch1.name = "master"  # Note: not the default branch
     branch1.default = False
     branch2 = Mock(spec=gitlab.v4.objects.ProjectBranch)
     branch2.name = "main"
