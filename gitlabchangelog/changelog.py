@@ -193,13 +193,18 @@ class Changelog:
             compare = f"{gitlab_url}/{repo}/-/compare/{prev_tag}...{version}"
 
         if prev_tag is None:
-            # Compare to first commit on the master branch to get merge requests and
+            # Compare to first commit on the default branch to get merge requests and
             # issues closed for first tag in the repo
+
+            # This syntax ensures there is only one item to unpack from the list
+            [default_branch] = [
+                branch for branch in self._repo.branches.list() if branch.default
+            ]
             all_commits = self._repo.commits.list(
                 all=True,
-                query_parameters={"ref_name": "master"},
+                query_parameters={"ref_name": default_branch.name},
             )
-            # The last commit is the first commit on the master branch
+            # The last commit is the first commit on the default branch
             prev_tag = all_commits[-1].short_id
             compare = f"{gitlab_url}/{repo}/-/compare/{prev_tag}...{version}"
 

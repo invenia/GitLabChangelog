@@ -396,13 +396,23 @@ def test_collect_data_for_first_release():
 
     p.tags.list = Mock(return_value=[tag])
 
+    # Set up branches
+    branch1 = Mock(spec=gitlab.v4.objects.ProjectBranch)
+    branch1.name = "master"  # Note: not the default branch
+    branch1.default = False
+    branch2 = Mock(spec=gitlab.v4.objects.ProjectBranch)
+    branch2.name = "main"
+    branch2.default = True
+    p.branches = Mock(spec=gitlab.v4.objects.ProjectBranchManager)
+    p.branches.list = Mock(return_value=[branch1, branch2])
+
     # Set up commits
     # Tag commit
     commit = Mock(spec=gitlab.v4.objects.ProjectCommit)
     commit.id = commit_sha
     commit.created_at = "2020-02-01 11:00:00"
 
-    # First commit on the master branch
+    # First commit on the default branch
     commit_1 = Mock(spec=gitlab.v4.objects.ProjectCommit)
     commit_1.short_id = "1a2b3c4d"
     commit_1.created_at = "2020-01-01 11:00:00"
@@ -484,3 +494,5 @@ def test_collect_data_for_first_release():
         "version_url": f"gitlab.foo.com/foo/bar/tree/{version}",
     }
     assert changelog._collect_data(version, commit_sha) == expected
+
+    p.commits.list.assert_called_with(all=True, query_parameters={"ref_name": "main"})
